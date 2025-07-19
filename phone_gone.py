@@ -1,66 +1,75 @@
 import scapy.all as scapy
-import socket
 import time
-import datetime
-import calendar
 import conf
 from wakeonlan import send_magic_packet
-import subprocess
+import paramiko
+import sys
+import logging
 
-end_time = time.time() + 60 * 1
+logging.getLogger("scapy").setLevel(logging.CRITICAL)
+
+class Wolconnectivity:
+    def __init__(self):
+        self.t_end = time.time() + 60 * 1
+        self.username = conf.username
+        self.password = conf.password
+        self.pc_mac = conf.pc_mac_adress
+        self.pc_ip = conf.pc_ip_address
+        self.phone_ip = conf.phone_ip_address
+
+    def turn_on_pc(self):
+        send_magic_packet(self.pc_mac)
+    
+        print("sent package")
+        time.sleep(15)
 
 
-def turn_on_pc():
-	send_magic_packet(conf.pc_mac_adress)
-	print("sent package")
+    def turn_off_pc(self):
+        client = paramiko.SSHClient()
+        client.load.system_host_keys()
+        client.connect(f"{self.pc_ip}", username=f"{self.username}", password=f"{self.password}")
+        ssh_stdin, ssh_stdout, ssh_stderr = client.exec_command("ss -ltn")
 
-def turn_off_pc():
-	pc = conf.pc_ip_address
-	for Computer in pc:
-		print(subprocess.getoutput("\nShutdown " + "-m " + "\\\\ " + Computer + " -f -r -t 0"))
+        for line in ssh_stdout:
+            results.append(line.strip('\n'))
+        t_end = time.time() + 60 * 1
+        while time.time() < t_end:
+            self.phone_found(self.phone)
 
-def scan(ip):
-	checker = []
-	while time.time() < end_time:
-		ans, _ = scapy.arping(ip)
-		if ans:
-			checker.append(ans.summary())
-		else:
-			turn_on_pc()
-	
-"""def check_weekend_weekday(date):
-	try:
-		given_date = datetime.datetime.strptime(date, '%d %m %Y')
-		day_of_week = (given_date.weekday() + 1) % 7
-		
-		if day_of_week 5:
-			day_type = 'weekday'
-			
-		else:
-			ip = conf.phone_ip_adress
-			day_type = 'weekend'
-			scan(ip)
+    def phone_found(self):
+        ip = self.phone_ip
+        while True:
+            ans = scapy.arping(self.phone_ip)
+            if ans:
+                print("Found the Phone")
+                self.turn_on_pc()
+            if not ans:
+                print("Did not find the phone,\n Waiting for an hour...")
+                while self.time.time() < t_end:
+                    if ans:
+                        self.phone_found()
+                    if not ans:
+                        self.turn_off_pc()
 
-	except ValueError as e:
-		print("error: ", e)"""
+    """def check_weekend_weekday(date):
+        try:
+            given_date = datetime.datetime.strptime(date, '%d %m %Y')
+            day_of_week = (given_date.weekday() + 1) % 7
+
+            if day_of_week 5:
+                day_type = 'weekday'
+
+            else:
+                ip = conf.phone_ip_adress
+                day_type = 'weekend'
+                scan(ip)
+
+        except ValueError as e:
+            print("error: ", e)"""
 
 if __name__ == "__main__":
-	ip = conf.phone_ip_adress
-	last_detected_time = time.time()
-	# check_weekend_weekday()
-	try:
-		while True:
-			if not scan(ip):
-				current_time = time.time()
-				offline_duration = current_time - last_detected_time
-				
-				if offline_duration >= end_time:
-					turn_off_pc()
-					print(f"\nPhone has been offline for {offline_duration / 60:.2f} minutes. Shutting down the PC.")
-				
-				else:
-					last_detected_time = time.time()
-					turn_on_pc(conf.pc_mac_adress)
-				time.sleep(5)
-	except Exception as e:
-		print("\nEncountered an error: ", e)
+    wol = Wolconnectivity()
+    wol.phone_found()
+
+
+
