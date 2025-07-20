@@ -1,16 +1,15 @@
 import scapy.all as scapy
 import time
-import conf
 from wakeonlan import send_magic_packet
 import paramiko
-import sys
+import conf
 import logging
 
+# Configure logging to avoid excessive output from Scapy
 logging.getLogger("scapy").setLevel(logging.CRITICAL)
 
 class Wolconnectivity:
     def __init__(self):
-        self.t_end = time.time() + 60 * 1
         self.username = conf.username
         self.password = conf.password
         self.pc_mac = conf.pc_mac_adress
@@ -19,57 +18,55 @@ class Wolconnectivity:
 
     def turn_on_pc(self):
         send_magic_packet(self.pc_mac)
-    
-        print("sent package")
+        print("Sent magic packet to PC")
         time.sleep(15)
-
 
     def turn_off_pc(self):
         client = paramiko.SSHClient()
-        client.load.system_host_keys()
-        client.connect(f"{self.pc_ip}", username=f"{self.username}", password=f"{self.password}")
-        ssh_stdin, ssh_stdout, ssh_stderr = client.exec_command("ss -ltn")
-
-        for line in ssh_stdout:
-            results.append(line.strip('\n'))
-        t_end = time.time() + 60 * 1
-        while time.time() < t_end:
-            self.phone_found(self.phone)
-
-    def phone_found(self):
-        ip = self.phone_ip
-        while True:
-            ans = scapy.arping(self.phone_ip)
-            if ans:
-                print("Found the Phone")
-                self.turn_on_pc()
-            if not ans:
-                print("Did not find the phone,\n Waiting for an hour...")
-                while self.time.time() < t_end:
-                    if ans:
-                        self.phone_found()
-                    if not ans:
-                        self.turn_off_pc()
-
-    """def check_weekend_weekday(date):
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         try:
-            given_date = datetime.datetime.strptime(date, '%d %m %Y')
-            day_of_week = (given_date.weekday() + 1) % 7
+            client.connect(self.pc_ip, username=self.username, password=self.password)
+            logging.info(f"Connected to PC at {self.pc_ip}")
+            shutdown_command = 'shutdown /s /t 0'
+            
+            ssh_stdin, ssh_stdout, ssh_stderr = client.exec_command(shutdown_command)
+            logging.info(f"Executed command: {shutdown_command}")
+            
+            stdout = ssh_stdout.read().decode()
+            stderr = ssh_stderr.read().decode()
+            
+            if stdout:
+                logging.info(f"SSH Command output:\n{stdout}")
+            if stderr:
+                logging.error(f"SSH Command Error:\n{stderr}")
+        except Exception as e:
+            logging.error(f"Error Connecting via SSH: {e}")
+        finally:
+            client.close()
+            logging.info("closed SSH Connection")
 
-            if day_of_week 5:
-                day_type = 'weekday'
-
-            else:
-                ip = conf.phone_ip_adress
-                day_type = 'weekend'
-                scan(ip)
-
-        except ValueError as e:
-            print("error: ", e)"""
+    def check_phone_presence(self):
+        ans = scapy.arping(self.phone_ip, verbose=False)[0]
+        for sent, received in ans.res:
+            if received.psrc == self.phone_ip:
+                print("Phone found\n", ans)
+                return True
+        print("Phone not found\n", ans)
+        return False 
 
 if __name__ == "__main__":
     wol = Wolconnectivity()
-    wol.phone_found()
-
-
-
+    
+    while True:
+        if wol.check_phone_presence():
+            wol.turn_on_pc()
+        else:
+            print("Phone not found. Waiting for 1 more minute to confirm absence...")
+            time.sleep(60)  # Wait 1 minute before confirming absence
+            if not wol.check_phone_presence():
+                print("Phone still not found after confirmation period. Turning off PC...")
+                wol.turn_off_pc()
+            else:
+                wol.turn_on_pc()
+        
+        time.sleep(60)  # Check every minute
