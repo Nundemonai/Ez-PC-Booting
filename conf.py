@@ -1,0 +1,6 @@
+pc_mac_adress="your:pc:mac:adress"
+pc_ip_address="your.pc.local.ip.adress"
+phone_mac_adress="your:phone:mac:adress"
+phone_ip_address="your.phone.ip.adress"
+password = "Your PC SSH Password"
+username = "Your PC login name"
