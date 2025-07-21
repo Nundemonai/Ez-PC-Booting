@@ -49,9 +49,7 @@ class Wolconnectivity:
         ans = scapy.arping(self.phone_ip, verbose=False)[0]
         for sent, received in ans.res:
             if received.psrc == self.phone_ip:
-                print("Phone found\n", ans)
                 return True
-        print("Phone not found\n", ans)
         return False 
 
 if __name__ == "__main__":
@@ -62,14 +60,12 @@ if __name__ == "__main__":
             wol.turn_on_pc()
         else:
             print("Phone not found. Waiting for 1 more hour to confirm absence...")
-            time.sleep(30)  # Wait 1 hour before confirming absence
-            for i in range(60):
-                print(i)
+            for i in range(3600):
                 if wol.check_phone_presence():
-                    print("Phone found again, not closing the PC off.")
+                    print(f"Phone found again, during the 1hr absence time not closing the PC off. \n {i}seconds")
                     break
             else:
                 print("Phone still not found after confirmation period. Turning off PC...")
                 wol.turn_off_pc()
         
-        time.sleep(30)  # Check every hour
+        time.sleep(15)  # Check 15 Seconds
