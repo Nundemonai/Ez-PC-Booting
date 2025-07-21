@@ -61,12 +61,15 @@ if __name__ == "__main__":
         if wol.check_phone_presence():
             wol.turn_on_pc()
         else:
-            print("Phone not found. Waiting for 1 more minute to confirm absence...")
-            time.sleep(60)  # Wait 1 minute before confirming absence
-            if not wol.check_phone_presence():
+            print("Phone not found. Waiting for 1 more hour to confirm absence...")
+            time.sleep(30)  # Wait 1 hour before confirming absence
+            for i in range(60):
+                print(i)
+                if wol.check_phone_presence():
+                    print("Phone found again, not closing the PC off.")
+                    break
+            else:
                 print("Phone still not found after confirmation period. Turning off PC...")
                 wol.turn_off_pc()
-            else:
-                wol.turn_on_pc()
         
-        time.sleep(60)  # Check every minute
+        time.sleep(30)  # Check every hour
