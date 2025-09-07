@@ -13,6 +13,6 @@ https://mit-license.org/
 First little release. Woooo
 
 
-***CHANGELOG
+**CHANGELOG**
 Changed from scapy to subprocess to ping the phone instead.
 Added Tuya lighting/lamp support turning on/off if phone leaves wifi
