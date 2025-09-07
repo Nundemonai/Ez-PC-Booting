@@ -14,5 +14,6 @@ First little release. Woooo
 
 
 **CHANGELOG**
+
 Changed from scapy to subprocess to ping the phone instead.
 Added Tuya lighting/lamp support turning on/off if phone leaves wifi
